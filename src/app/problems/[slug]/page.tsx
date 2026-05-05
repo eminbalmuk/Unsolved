@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { BreakdownChart, TrendChart } from "@/components/charts";
+import { ProblemAnalysisPanel } from "@/components/problem-analysis-panel";
 import { ScoreBadge } from "@/components/score-badge";
 import { ValidateButton } from "@/components/validate-button";
 import { Badge } from "@/components/ui/badge";
@@ -84,24 +85,7 @@ export default async function ProblemPage({
           </Card>
 
           <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
-            <Card className="bg-card/82">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Bot className="size-5 text-primary" aria-hidden />
-                  AI analysis
-                </CardTitle>
-                <CardDescription>
-                  Transparent summary linked to the source evidence below.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="leading-7 text-muted-foreground">
-                  {problem.aiSummary}
-                </p>
-                <Separator className="my-5" />
-                <p className="leading-7">{problem.opportunity}</p>
-              </CardContent>
-            </Card>
+            <ProblemAnalysisPanel problemId={problem.slug} />
 
             <Card className="bg-card/82">
               <CardHeader>
@@ -127,6 +111,19 @@ export default async function ProblemPage({
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
+              <div className="rounded-md border bg-background/45 p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <Bot className="size-4 text-primary" aria-hidden />
+                  <span className="text-sm font-medium">
+                    Ön analiz sinyali
+                  </span>
+                </div>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  {problem.aiSummary}
+                </p>
+                <Separator className="my-4" />
+                <p className="text-sm leading-6">{problem.opportunity}</p>
+              </div>
               {problem.sources.map((source) => (
                 <div key={source.id} className="rounded-md border bg-background/45 p-4">
                   <div className="mb-3 flex flex-wrap items-center gap-2">

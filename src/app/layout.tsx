@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   title: "Unsolved | Problem Discovery Radar",
   description:
     "A polished MVP for finding unresolved SaaS problems from public customer signals.",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({

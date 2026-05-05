@@ -38,6 +38,7 @@ npm run build
 - `POST /api/auth/logout`
 - `GET /api/problems?q=&sector=&sort=` - live public data with seed fallback
 - `GET /api/problems/[id]`
+- `POST /api/problems/[id]/analysis` - on-demand Turkish AI analysis and solution suggestions
 - `POST /api/problems/[id]/validate`
 - `GET /api/reports/weekly`
 
@@ -53,11 +54,19 @@ Live source fetches are cached for 15 minutes and fall back to the seed dataset 
 - `REDDIT_USER_AGENT`
 - `APPLE_RSS_COUNTRY`
 
+## Turkish problem analysis
+
+Problem detail pages include an on-demand `Analiz Et` button. It calls BytePlus Ark only when the user asks for analysis, then returns a compact Turkish summary, pain drivers, solution ideas, MVP steps, and risks. Required environment variables:
+
+- `BYTEPLUS_ARK_API_KEY`
+- `BYTEPLUS_ARK_API_URL` (defaults to the BytePlus Ark chat completions endpoint)
+- `BYTEPLUS_ARK_MODEL` (defaults to `deepseek-v3-2-251201`)
+
 Live auth, payment, Supabase, Pinecone, OAuth-based Reddit API access, and FastAPI LLM pipeline are intentionally left as integration boundaries for the next phase.
 
 ## Supabase + Prisma auth
 
-Fill `.env` from `.env.example`, then run:
+Fill `.env` with the required Supabase and auth values, then run:
 
 ```bash
 npm run db:generate

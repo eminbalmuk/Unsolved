@@ -63,6 +63,14 @@ export type ValidationState = {
   threshold: number;
 };
 
+export type ProblemAnalysis = {
+  turkishSummary: string;
+  painDrivers: string[];
+  solutionIdeas: string[];
+  mvpSteps: string[];
+  risks: string[];
+};
+
 export type WeeklyReport = {
   company: string;
   sector: string;

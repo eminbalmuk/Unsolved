@@ -22,6 +22,10 @@ type RawSignal = {
   rating?: number;
 };
 
+type LiveFetchOptions = {
+  refresh?: boolean;
+};
+
 type RedditListing = {
   data?: {
     children?: {
@@ -268,14 +272,18 @@ function signalToProblem(signal: RawSignal, index: number): Problem {
   };
 }
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+async function fetchJson<T>(
+  url: string,
+  init?: RequestInit,
+  options: LiveFetchOptions = {},
+): Promise<T> {
   const response = await fetch(url, {
     ...init,
     headers: {
       Accept: "application/json",
       ...init?.headers,
     },
-    next: { revalidate: 900 },
+    ...(options.refresh ? { cache: "no-store" as const } : { next: { revalidate: 900 } }),
   });
 
   if (!response.ok) {
@@ -285,7 +293,7 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-async function fetchRedditSignals() {
+async function fetchRedditSignals(options: LiveFetchOptions = {}) {
   const query = encodeURIComponent(
     '"I wish" OR frustrated OR pain OR problem OR "doesn\'t work"',
   );
@@ -294,6 +302,7 @@ async function fetchRedditSignals() {
       fetchJson<RedditListing>(
         `https://www.reddit.com/r/${subreddit}/search.json?q=${query}&restrict_sr=1&sort=new&limit=8`,
         { headers: { "User-Agent": USER_AGENT } },
+        options,
       ),
     ),
   );
@@ -326,11 +335,13 @@ async function fetchRedditSignals() {
   });
 }
 
-async function fetchAppleReviewSignals() {
+async function fetchAppleReviewSignals(options: LiveFetchOptions = {}) {
   const feeds = await Promise.allSettled(
     APPLE_REVIEW_APP_IDS.map((id) =>
       fetchJson<AppleReviewFeed>(
         `https://itunes.apple.com/${APPLE_COUNTRY}/rss/customerreviews/id=${id}/sortBy=mostRecent/json`,
+        undefined,
+        options,
       ),
     ),
   );
@@ -366,10 +377,26 @@ async function fetchAppleReviewSignals() {
   });
 }
 
-export async function getLiveSignals() {
+function dedupeProblems(problems: Problem[]) {
+  const seen = new Set<string>();
+
+  return problems.filter((problem) => {
+    const key = problem.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()
+      .slice(0, 80);
+
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+export async function getLiveSignals(options: LiveFetchOptions = {}) {
   const [reddit, apple] = await Promise.allSettled([
-    fetchRedditSignals(),
-    fetchAppleReviewSignals(),
+    fetchRedditSignals(options),
+    fetchAppleReviewSignals(options),
   ]);
 
   return [
@@ -378,17 +405,18 @@ export async function getLiveSignals() {
   ];
 }
 
-export async function getLiveProblems() {
-  const signals = await getLiveSignals();
+export async function getLiveProblems(options: LiveFetchOptions = {}) {
+  const signals = await getLiveSignals(options);
 
   if (signals.length === 0) {
     return seedProblems;
   }
 
-  const liveProblems = signals
-    .map(signalToProblem)
-    .sort((a, b) => b.painScore - a.painScore)
-    .slice(0, 16);
+  const liveProblems = dedupeProblems(
+    signals
+      .map(signalToProblem)
+      .sort((a, b) => b.painScore - a.painScore),
+  ).slice(0, 32);
 
   return liveProblems.length > 0 ? liveProblems : seedProblems;
 }

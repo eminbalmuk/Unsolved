@@ -7,10 +7,12 @@ import { motion } from "motion/react";
 import {
   ArrowUpDown,
   CalendarClock,
+  CalendarDays,
   ChevronRight,
   Filter,
   Flame,
   Radio,
+  RefreshCw,
   Search,
   Users,
 } from "lucide-react";
@@ -32,6 +34,7 @@ import { formatDateLabel } from "@/lib/scoring";
 import type { Problem } from "@/lib/types";
 
 type SortMode = "pain" | "new" | "validated";
+type TimeWindow = "today" | "3d" | "7d" | "30d" | "all";
 
 type BoardColumn = {
   id: string;
@@ -40,6 +43,43 @@ type BoardColumn = {
   accent: string;
   problems: Problem[];
 };
+
+type ProblemsResponse = {
+  problems: Problem[];
+  refreshedAt: string;
+  refreshMode: "live" | "cached";
+};
+
+const timeWindowOptions: { value: TimeWindow; label: string }[] = [
+  { value: "today", label: "Bugün" },
+  { value: "3d", label: "Son 3 gün" },
+  { value: "7d", label: "Son 1 hafta" },
+  { value: "30d", label: "Son 1 ay" },
+  { value: "all", label: "Tümü" },
+];
+
+function getWindowStart(window: TimeWindow) {
+  const now = new Date();
+
+  if (window === "all") return null;
+
+  if (window === "today") {
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    return start.getTime();
+  }
+
+  const days = window === "3d" ? 3 : window === "7d" ? 7 : 30;
+  return now.getTime() - days * 24 * 60 * 60 * 1000;
+}
+
+function isInWindow(problem: Problem, window: TimeWindow) {
+  const windowStart = getWindowStart(window);
+  if (!windowStart) return true;
+
+  const seenAt = new Date(problem.lastSeenAt).getTime();
+  return Number.isFinite(seenAt) && seenAt >= windowStart;
+}
 
 function sortProblems(problems: Problem[], sort: SortMode) {
   return problems.slice().sort((a, b) => {
@@ -95,10 +135,7 @@ function buildColumns(problems: Problem[], sort: SortMode): BoardColumn[] {
 
   return columns.map((column) => ({
     ...column,
-    problems: sortProblems(
-      column.problems.length > 0 ? column.problems : problems.slice(0, 3),
-      sort,
-    ).slice(0, 7),
+    problems: sortProblems(column.problems, sort).slice(0, 7),
   }));
 }
 
@@ -133,6 +170,40 @@ function FilterPanel({
             onClick={() => onSortChange(value as SortMode)}
           >
             {label}
+          </Button>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function TimeWindowPanel({
+  window,
+  onWindowChange,
+}: {
+  window: TimeWindow;
+  onWindowChange: (value: TimeWindow) => void;
+}) {
+  return (
+    <Card className="bg-card/84">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-xl">
+          <CalendarDays className="size-5 text-primary" aria-hidden />
+          Pain window
+        </CardTitle>
+        <CardDescription className="text-lg leading-7">
+          En kritik problemi seçmek için kaynak tarih aralığını daralt.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-2">
+        {timeWindowOptions.map((option) => (
+          <Button
+            key={option.value}
+            variant={window === option.value ? "default" : "secondary"}
+            className="h-11 justify-start text-base"
+            onClick={() => onWindowChange(option.value)}
+          >
+            {option.label}
           </Button>
         ))}
       </CardContent>
@@ -248,13 +319,19 @@ function BoardColumnCard({ column }: { column: BoardColumn }) {
       </div>
 
       <div className="mt-4 grid gap-4">
-        {column.problems.map((problem, index) => (
-          <ProblemCard
-            key={`${column.id}-${problem.id}`}
-            problem={problem}
-            index={index}
-          />
-        ))}
+        {column.problems.length > 0 ? (
+          column.problems.map((problem, index) => (
+            <ProblemCard
+              key={`${column.id}-${problem.id}`}
+              problem={problem}
+              index={index}
+            />
+          ))
+        ) : (
+          <div className="rounded-md border border-dashed bg-background/35 p-5 text-base leading-7 text-muted-foreground">
+            Bu tarih aralığında bu şeride düşen yeni sinyal yok.
+          </div>
+        )}
       </div>
     </motion.section>
   );
@@ -262,17 +339,46 @@ function BoardColumnCard({ column }: { column: BoardColumn }) {
 
 export function DiscoveryFeed({
   problems,
-  hotProblem,
 }: {
   problems: Problem[];
-  hotProblem: Problem;
 }) {
+  const [currentProblems, setCurrentProblems] = useState(problems);
   const [query, setQuery] = useState("");
   const [sector, setSector] = useState("all");
   const [sort, setSort] = useState<SortMode>("pain");
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>("7d");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    setRefreshError(null);
+
+    try {
+      const response = await fetch("/api/problems?refresh=1", {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error("Live refresh failed.");
+      }
+
+      const data = (await response.json()) as ProblemsResponse;
+      const nextProblems = data.problems;
+
+      setCurrentProblems(nextProblems);
+      setLastRefreshedAt(data.refreshedAt);
+    } catch {
+      setRefreshError("Live sources could not be refreshed. Showing the latest loaded board.");
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
 
   const filtered = useMemo(() => {
-    return problems.filter((problem) => {
+    return currentProblems.filter((problem) => {
+      const matchesWindow = isInWindow(problem, timeWindow);
       const matchesSector =
         sector === "all" || problem.sector.toLowerCase() === sector;
       const matchesQuery =
@@ -282,9 +388,9 @@ export function DiscoveryFeed({
           .toLowerCase()
           .includes(query.toLowerCase());
 
-      return matchesSector && matchesQuery;
+      return matchesWindow && matchesSector && matchesQuery;
     });
-  }, [problems, query, sector]);
+  }, [currentProblems, query, sector, timeWindow]);
 
   const columns = useMemo(
     () => buildColumns(filtered, sort),
@@ -294,6 +400,12 @@ export function DiscoveryFeed({
     (total, problem) => total + problem.sourceCount,
     0,
   );
+  const selectedHotProblem = useMemo(
+    () => sortProblems(filtered, "pain")[0],
+    [filtered],
+  );
+  const activeWindowLabel =
+    timeWindowOptions.find((option) => option.value === timeWindow)?.label ?? "Tümü";
 
   return (
     <section className="mx-auto w-full max-w-[1680px] px-4 py-10 sm:px-6 lg:px-8">
@@ -319,6 +431,9 @@ export function DiscoveryFeed({
               <Badge variant="outline" className="px-3 py-1 text-base">
                 {signalCount} signals
               </Badge>
+              <Badge variant="outline" className="px-3 py-1 text-base">
+                {activeWindowLabel}
+              </Badge>
             </div>
             <h1 className="mt-5 max-w-4xl text-5xl font-semibold leading-tight md:text-6xl xl:text-7xl">
               Explora board turns live pain into movable market lanes.
@@ -333,14 +448,22 @@ export function DiscoveryFeed({
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-2xl">
                 <Flame className="size-5 text-accent" aria-hidden />
-                Hot signal trend
+                Window critical problem
               </CardTitle>
               <CardDescription className="text-lg leading-7">
-                {hotProblem.title}
+                {selectedHotProblem
+                  ? selectedHotProblem.title
+                  : "Bu aralıkta eşleşen problem yok."}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <TrendChart problem={hotProblem} />
+              {selectedHotProblem ? (
+                <TrendChart problem={selectedHotProblem} />
+              ) : (
+                <div className="rounded-md border border-dashed bg-background/35 p-4 text-base leading-7 text-muted-foreground">
+                  Daha geniş bir tarih aralığı seçerek sinyal havuzunu büyütebilirsin.
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -349,6 +472,30 @@ export function DiscoveryFeed({
       <div className="mt-6 grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="space-y-4">
           <div className="flex flex-col gap-3 rounded-lg border bg-card/84 p-4 md:flex-row md:items-center lg:flex-col lg:items-stretch">
+            <Button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="h-13 justify-start text-base"
+            >
+              <RefreshCw
+                className={`size-5 ${isRefreshing ? "animate-spin" : ""}`}
+                aria-hidden
+              />
+              {isRefreshing ? "Yenileniyor..." : "Yenile"}
+            </Button>
+            {lastRefreshedAt ? (
+              <p className="text-sm leading-6 text-muted-foreground">
+                Son yenileme:{" "}
+                {new Intl.DateTimeFormat("tr", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                }).format(new Date(lastRefreshedAt))}
+              </p>
+            ) : null}
+            {refreshError ? (
+              <p className="text-sm leading-6 text-destructive">{refreshError}</p>
+            ) : null}
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -383,11 +530,19 @@ export function DiscoveryFeed({
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[340px]">
-                <div className="mt-8">
+                <div className="mt-8 space-y-4">
+                  <TimeWindowPanel
+                    window={timeWindow}
+                    onWindowChange={setTimeWindow}
+                  />
                   <FilterPanel sort={sort} onSortChange={setSort} />
                 </div>
               </SheetContent>
             </Sheet>
+          </div>
+
+          <div className="hidden lg:block">
+            <TimeWindowPanel window={timeWindow} onWindowChange={setTimeWindow} />
           </div>
 
           <div className="hidden lg:block">
@@ -396,11 +551,22 @@ export function DiscoveryFeed({
         </aside>
 
         <div className="overflow-hidden rounded-lg border bg-card/40">
-          <div className="flex snap-x gap-4 overflow-x-auto scroll-smooth p-4 pb-6">
-            {columns.map((column) => (
-              <BoardColumnCard key={column.id} column={column} />
-            ))}
-          </div>
+          {filtered.length > 0 ? (
+            <div className="flex snap-x gap-4 overflow-x-auto scroll-smooth p-4 pb-6">
+              {columns.map((column) => (
+                <BoardColumnCard key={column.id} column={column} />
+              ))}
+            </div>
+          ) : (
+            <div className="p-6">
+              <div className="rounded-md border border-dashed bg-background/35 p-8 text-center">
+                <p className="text-2xl font-semibold">Bu keşif penceresi boş.</p>
+                <p className="mx-auto mt-3 max-w-xl text-base leading-7 text-muted-foreground">
+                  Aramayı temizle, sektör filtresini genişlet veya daha uzun bir tarih aralığı seç.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </section>

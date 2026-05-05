@@ -6,7 +6,8 @@ export async function GET(request: Request) {
   const query = searchParams.get("q")?.toLowerCase().trim() ?? "";
   const sector = searchParams.get("sector") ?? "all";
   const sort = searchParams.get("sort") ?? "pain";
-  const problems = await getLiveProblems();
+  const refresh = searchParams.get("refresh") === "1";
+  const problems = await getLiveProblems({ refresh });
 
   let results = problems.filter((problem) => {
     const matchesSector =
@@ -33,5 +34,9 @@ export async function GET(request: Request) {
     return b.painScore - a.painScore;
   });
 
-  return NextResponse.json({ problems: results });
+  return NextResponse.json({
+    problems: results,
+    refreshedAt: new Date().toISOString(),
+    refreshMode: refresh ? "live" : "cached",
+  });
 }

@@ -88,7 +88,7 @@ export default async function ExplorePage() {
         </div>
       </section>
 
-      <DiscoveryFeed problems={problems} hotProblem={hotProblem} />
+      <DiscoveryFeed problems={problems} />
     </AppShell>
   );
 }

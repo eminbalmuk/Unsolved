@@ -1,0 +1,78 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { ValidationState } from "@/lib/types";
+
+export function ValidateButton({
+  problemId,
+  initialCount,
+}: {
+  problemId: string;
+  initialCount: number;
+}) {
+  const router = useRouter();
+  const [state, setState] = useState<ValidationState>({
+    problemId,
+    userHasValidated: false,
+    validationCount: initialCount,
+    threshold: 50,
+  });
+  const [isPending, startTransition] = useTransition();
+
+  function validate() {
+    if (state.userHasValidated) return;
+
+    setState((current) => ({
+      ...current,
+      userHasValidated: true,
+      validationCount: current.validationCount + 1,
+    }));
+
+    startTransition(async () => {
+      const response = await fetch(`/api/problems/${problemId}/validate`, {
+        method: "POST",
+      });
+
+      if (response.status === 401) {
+        router.push("/login");
+        return;
+      }
+
+      if (response.ok) {
+        const nextState = (await response.json()) as ValidationState;
+        setState(nextState);
+      }
+    });
+  }
+
+  const isSaturated = state.validationCount >= state.threshold;
+
+  return (
+    <div className="space-y-3">
+      <Button
+        onClick={validate}
+        disabled={state.userHasValidated || isPending}
+        className="w-full"
+        size="lg"
+      >
+        {isPending ? (
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+        ) : (
+          <CheckCircle2 className="size-4" aria-hidden />
+        )}
+        {state.userHasValidated ? "Validated" : "I will solve this"}
+      </Button>
+      <p className="text-center text-sm text-muted-foreground">
+        {state.validationCount} founders are tracking this market.
+      </p>
+      {isSaturated ? (
+        <p className="rounded-md border border-amber-300/30 bg-amber-400/10 p-3 text-sm text-amber-100">
+          This market is approaching saturation. Move with a sharper wedge.
+        </p>
+      ) : null}
+    </div>
+  );
+}

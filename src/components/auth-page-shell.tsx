@@ -1,0 +1,63 @@
+import Image from "next/image";
+import Link from "next/link";
+import { BarChart3 } from "lucide-react";
+import { AuthForm } from "@/components/auth-form";
+
+export function AuthPageShell({ mode }: { mode: "login" | "register" }) {
+  return (
+    <main className="relative grid min-h-screen overflow-hidden bg-background text-foreground lg:grid-cols-[0.9fr_1.1fr]">
+      <div className="absolute inset-0 -z-10 dashboard-grid opacity-30" />
+      <section className="relative hidden border-r lg:block">
+        <Image
+          src="/images/secure-workspace-visual.webp"
+          alt="Problem radar background"
+          fill
+          priority
+          className="object-cover opacity-70"
+          sizes="45vw"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,var(--background)_0%,color-mix(in_oklch,var(--background)_74%,transparent)_62%,transparent_100%)]" />
+        <div className="relative flex h-full flex-col justify-between p-10">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="grid size-12 place-items-center rounded-md border bg-card/82 backdrop-blur">
+              <BarChart3 className="size-5 text-primary" aria-hidden />
+            </span>
+            <span>
+              <span className="block text-lg font-semibold">Unsolved</span>
+              <span className="block text-base text-muted-foreground">
+                Problem discovery radar
+              </span>
+            </span>
+          </Link>
+
+          <div className="max-w-xl space-y-5">
+            <p className="text-lg font-medium text-primary">
+              Founder account system
+            </p>
+            <h1 className="text-6xl font-semibold leading-tight">
+              Keep every validation loop tied to your workspace.
+            </h1>
+            <p className="text-xl leading-9 text-muted-foreground">
+              Save problems, validate markets, and prepare for Supabase-backed
+              reports from one secure session.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-6">
+        <div className="w-full max-w-md space-y-6">
+          <div className="lg:hidden">
+            <Link href="/" className="flex items-center gap-3">
+              <span className="grid size-11 place-items-center rounded-md border bg-card">
+                <BarChart3 className="size-5 text-primary" aria-hidden />
+              </span>
+              <span className="text-lg font-semibold">Unsolved</span>
+            </Link>
+          </div>
+          <AuthForm mode={mode} />
+        </div>
+      </section>
+    </main>
+  );
+}

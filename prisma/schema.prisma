@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  FOUNDER
+  PRODUCT_MANAGER
+  ENTERPRISE
+  ADMIN
+}
+
+enum SubscriptionPlan {
+  FREEMIUM
+  PRO
+  ENTERPRISE
+}
+
+model User {
+  id           String           @id @default(cuid())
+  name         String?
+  email        String           @unique
+  passwordHash String
+  role         UserRole         @default(FOUNDER)
+  plan         SubscriptionPlan @default(FREEMIUM)
+  company      String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  validations  ProblemValidation[]
+  savedProblems SavedProblem[]
+}
+
+model ProblemValidation {
+  id        String   @id @default(cuid())
+  userId    String
+  problemId String
+  source    String   @default("app")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, problemId])
+  @@index([problemId])
+}
+
+model SavedProblem {
+  id        String   @id @default(cuid())
+  userId    String
+  problemId String
+  note      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, problemId])
+  @@index([problemId])
+}

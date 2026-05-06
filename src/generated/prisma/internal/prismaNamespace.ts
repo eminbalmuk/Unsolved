@@ -385,6 +385,9 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   User: 'User',
+  ProblemRecord: 'ProblemRecord',
+  ProblemSourceRecord: 'ProblemSourceRecord',
+  ProblemAnalysisRecord: 'ProblemAnalysisRecord',
   ProblemValidation: 'ProblemValidation',
   SavedProblem: 'SavedProblem'
 } as const
@@ -402,7 +405,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "problemValidation" | "savedProblem"
+    modelProps: "user" | "problemRecord" | "problemSourceRecord" | "problemAnalysisRecord" | "problemValidation" | "savedProblem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -477,6 +480,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserCountAggregateOutputType> | number
+        }
+      }
+    }
+    ProblemRecord: {
+      payload: Prisma.$ProblemRecordPayload<ExtArgs>
+      fields: Prisma.ProblemRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ProblemRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ProblemRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.ProblemRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ProblemRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemRecordPayload>
+        }
+        findMany: {
+          args: Prisma.ProblemRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemRecordPayload>[]
+        }
+        create: {
+          args: Prisma.ProblemRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemRecordPayload>
+        }
+        createMany: {
+          args: Prisma.ProblemRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ProblemRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.ProblemRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemRecordPayload>
+        }
+        update: {
+          args: Prisma.ProblemRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.ProblemRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ProblemRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ProblemRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.ProblemRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.ProblemRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProblemRecord>
+        }
+        groupBy: {
+          args: Prisma.ProblemRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProblemRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ProblemRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProblemRecordCountAggregateOutputType> | number
+        }
+      }
+    }
+    ProblemSourceRecord: {
+      payload: Prisma.$ProblemSourceRecordPayload<ExtArgs>
+      fields: Prisma.ProblemSourceRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ProblemSourceRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemSourceRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ProblemSourceRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemSourceRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.ProblemSourceRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemSourceRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ProblemSourceRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemSourceRecordPayload>
+        }
+        findMany: {
+          args: Prisma.ProblemSourceRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemSourceRecordPayload>[]
+        }
+        create: {
+          args: Prisma.ProblemSourceRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemSourceRecordPayload>
+        }
+        createMany: {
+          args: Prisma.ProblemSourceRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ProblemSourceRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemSourceRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.ProblemSourceRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemSourceRecordPayload>
+        }
+        update: {
+          args: Prisma.ProblemSourceRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemSourceRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.ProblemSourceRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ProblemSourceRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ProblemSourceRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemSourceRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.ProblemSourceRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemSourceRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.ProblemSourceRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProblemSourceRecord>
+        }
+        groupBy: {
+          args: Prisma.ProblemSourceRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProblemSourceRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ProblemSourceRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProblemSourceRecordCountAggregateOutputType> | number
+        }
+      }
+    }
+    ProblemAnalysisRecord: {
+      payload: Prisma.$ProblemAnalysisRecordPayload<ExtArgs>
+      fields: Prisma.ProblemAnalysisRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ProblemAnalysisRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemAnalysisRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ProblemAnalysisRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemAnalysisRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.ProblemAnalysisRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemAnalysisRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ProblemAnalysisRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemAnalysisRecordPayload>
+        }
+        findMany: {
+          args: Prisma.ProblemAnalysisRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemAnalysisRecordPayload>[]
+        }
+        create: {
+          args: Prisma.ProblemAnalysisRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemAnalysisRecordPayload>
+        }
+        createMany: {
+          args: Prisma.ProblemAnalysisRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ProblemAnalysisRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemAnalysisRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.ProblemAnalysisRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemAnalysisRecordPayload>
+        }
+        update: {
+          args: Prisma.ProblemAnalysisRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemAnalysisRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.ProblemAnalysisRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ProblemAnalysisRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ProblemAnalysisRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemAnalysisRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.ProblemAnalysisRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProblemAnalysisRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.ProblemAnalysisRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProblemAnalysisRecord>
+        }
+        groupBy: {
+          args: Prisma.ProblemAnalysisRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProblemAnalysisRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ProblemAnalysisRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProblemAnalysisRecordCountAggregateOutputType> | number
         }
       }
     }
@@ -682,6 +907,67 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+export const ProblemRecordScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  title: 'title',
+  sector: 'sector',
+  category: 'category',
+  status: 'status',
+  summary: 'summary',
+  aiSummary: 'aiSummary',
+  painScore: 'painScore',
+  frequency: 'frequency',
+  emotionalScore: 'emotionalScore',
+  willingnessPay: 'willingnessPay',
+  validationCount: 'validationCount',
+  lastSeenAt: 'lastSeenAt',
+  sourceCount: 'sourceCount',
+  sourcePlatforms: 'sourcePlatforms',
+  trend: 'trend',
+  competitors: 'competitors',
+  opportunity: 'opportunity',
+  tags: 'tags',
+  firstSeenAt: 'firstSeenAt',
+  refreshedAt: 'refreshedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProblemRecordScalarFieldEnum = (typeof ProblemRecordScalarFieldEnum)[keyof typeof ProblemRecordScalarFieldEnum]
+
+
+export const ProblemSourceRecordScalarFieldEnum = {
+  id: 'id',
+  problemId: 'problemId',
+  platform: 'platform',
+  author: 'author',
+  excerpt: 'excerpt',
+  url: 'url',
+  capturedAt: 'capturedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type ProblemSourceRecordScalarFieldEnum = (typeof ProblemSourceRecordScalarFieldEnum)[keyof typeof ProblemSourceRecordScalarFieldEnum]
+
+
+export const ProblemAnalysisRecordScalarFieldEnum = {
+  id: 'id',
+  problemId: 'problemId',
+  turkishSummary: 'turkishSummary',
+  painDrivers: 'painDrivers',
+  solutionIdeas: 'solutionIdeas',
+  mvpSteps: 'mvpSteps',
+  risks: 'risks',
+  model: 'model',
+  promptVersion: 'promptVersion',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProblemAnalysisRecordScalarFieldEnum = (typeof ProblemAnalysisRecordScalarFieldEnum)[keyof typeof ProblemAnalysisRecordScalarFieldEnum]
+
+
 export const ProblemValidationScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -712,6 +998,13 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -726,6 +1019,15 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
 
@@ -801,6 +1103,34 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 /**
@@ -914,6 +1244,9 @@ export type PrismaClientOptions = ({
 }
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
+  problemRecord?: Prisma.ProblemRecordOmit
+  problemSourceRecord?: Prisma.ProblemSourceRecordOmit
+  problemAnalysisRecord?: Prisma.ProblemAnalysisRecordOmit
   problemValidation?: Prisma.ProblemValidationOmit
   savedProblem?: Prisma.SavedProblemOmit
 }

@@ -11,6 +11,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
+    "db:setup:supabase": "node scripts/setup-supabase-schema.mjs",
+    "db:seed:problems": "npx tsx scripts/seed-live-problems.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {

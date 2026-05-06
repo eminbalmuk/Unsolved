@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { setSessionCookie } from "@/lib/auth";
+import {
+  isSupabaseAuthConfigured,
+  setSessionCookie,
+  signUpWithSupabase,
+} from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 
 const registerSchema = z.object({
@@ -13,6 +17,32 @@ const registerSchema = z.object({
 
 export async function POST(request: Request) {
   if (!process.env.DATABASE_URL || !process.env.AUTH_SECRET) {
+    if (isSupabaseAuthConfigured()) {
+      const parsed = registerSchema.safeParse(await request.json());
+
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: "Please provide a valid name, email, and 8+ character password." },
+          { status: 400 },
+        );
+      }
+
+      try {
+        const result = await signUpWithSupabase(parsed.data);
+        return NextResponse.json(result, { status: 201 });
+      } catch (error) {
+        return NextResponse.json(
+          {
+            error:
+              error instanceof Error
+                ? error.message
+                : "Supabase registration failed.",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
     return NextResponse.json(
       { error: "Auth is not configured. Fill DATABASE_URL and AUTH_SECRET in .env." },
       { status: 503 },

@@ -1,4 +1,9 @@
 import { problems as seedProblems } from "@/lib/data";
+import {
+  getStoredProblemBySlug,
+  getStoredProblems,
+  upsertStoredProblems,
+} from "@/lib/problem-store";
 import { calculatePainScore } from "@/lib/scoring";
 import type {
   CompetitorGap,
@@ -406,9 +411,21 @@ export async function getLiveSignals(options: LiveFetchOptions = {}) {
 }
 
 export async function getLiveProblems(options: LiveFetchOptions = {}) {
+  if (!options.refresh) {
+    const storedProblems = await getStoredProblems();
+    if (storedProblems && storedProblems.length > 0) {
+      return storedProblems;
+    }
+  }
+
   const signals = await getLiveSignals(options);
 
   if (signals.length === 0) {
+    const storedProblems = await getStoredProblems();
+    if (storedProblems && storedProblems.length > 0) {
+      return storedProblems;
+    }
+
     return seedProblems;
   }
 
@@ -418,10 +435,19 @@ export async function getLiveProblems(options: LiveFetchOptions = {}) {
       .sort((a, b) => b.painScore - a.painScore),
   ).slice(0, 32);
 
-  return liveProblems.length > 0 ? liveProblems : seedProblems;
+  if (liveProblems.length > 0) {
+    await upsertStoredProblems(liveProblems);
+    return liveProblems;
+  }
+
+  const storedProblems = await getStoredProblems();
+  return storedProblems && storedProblems.length > 0 ? storedProblems : seedProblems;
 }
 
 export async function getLiveProblemBySlug(slug: string) {
+  const storedProblem = await getStoredProblemBySlug(slug);
+  if (storedProblem) return storedProblem;
+
   const liveProblem = (await getLiveProblems()).find(
     (problem) => problem.slug === slug || problem.id === slug,
   );

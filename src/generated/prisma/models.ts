@@ -9,6 +9,9 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User'
+export type * from './models/ProblemRecord'
+export type * from './models/ProblemSourceRecord'
+export type * from './models/ProblemAnalysisRecord'
 export type * from './models/ProblemValidation'
 export type * from './models/SavedProblem'
 export type * from './commonInputTypes'

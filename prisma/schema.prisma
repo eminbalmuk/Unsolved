@@ -35,6 +35,75 @@ model User {
   savedProblems SavedProblem[]
 }
 
+model ProblemRecord {
+  id              String   @id
+  slug            String   @unique
+  title           String
+  sector          String
+  category        String
+  status          String
+  summary         String
+  aiSummary       String
+  painScore       Int
+  frequency       Int
+  emotionalScore  Int
+  willingnessPay  Int
+  validationCount Int      @default(0)
+  lastSeenAt      DateTime
+  sourceCount     Int      @default(0)
+  sourcePlatforms String[]
+  trend           Json
+  competitors     Json
+  opportunity     String
+  tags            String[]
+  firstSeenAt     DateTime @default(now())
+  refreshedAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sources  ProblemSourceRecord[]
+  analysis ProblemAnalysisRecord?
+
+  @@index([painScore])
+  @@index([lastSeenAt])
+  @@index([sector])
+  @@index([category])
+}
+
+model ProblemSourceRecord {
+  id         String   @id
+  problemId  String
+  platform   String
+  author     String
+  excerpt    String
+  url        String
+  capturedAt DateTime
+  createdAt  DateTime @default(now())
+
+  problem ProblemRecord @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([problemId, url])
+  @@index([capturedAt])
+}
+
+model ProblemAnalysisRecord {
+  id             String   @id @default(cuid())
+  problemId      String   @unique
+  turkishSummary String
+  painDrivers    String[]
+  solutionIdeas  String[]
+  mvpSteps       String[]
+  risks          String[]
+  model          String
+  promptVersion  String   @default("tr-analysis-v1")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  problem ProblemRecord @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+}
+
 model ProblemValidation {
   id        String   @id @default(cuid())
   userId    String

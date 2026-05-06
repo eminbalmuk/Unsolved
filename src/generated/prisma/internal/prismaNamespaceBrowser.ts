@@ -52,6 +52,9 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  ProblemRecord: 'ProblemRecord',
+  ProblemSourceRecord: 'ProblemSourceRecord',
+  ProblemAnalysisRecord: 'ProblemAnalysisRecord',
   ProblemValidation: 'ProblemValidation',
   SavedProblem: 'SavedProblem'
 } as const
@@ -87,6 +90,67 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+export const ProblemRecordScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  title: 'title',
+  sector: 'sector',
+  category: 'category',
+  status: 'status',
+  summary: 'summary',
+  aiSummary: 'aiSummary',
+  painScore: 'painScore',
+  frequency: 'frequency',
+  emotionalScore: 'emotionalScore',
+  willingnessPay: 'willingnessPay',
+  validationCount: 'validationCount',
+  lastSeenAt: 'lastSeenAt',
+  sourceCount: 'sourceCount',
+  sourcePlatforms: 'sourcePlatforms',
+  trend: 'trend',
+  competitors: 'competitors',
+  opportunity: 'opportunity',
+  tags: 'tags',
+  firstSeenAt: 'firstSeenAt',
+  refreshedAt: 'refreshedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProblemRecordScalarFieldEnum = (typeof ProblemRecordScalarFieldEnum)[keyof typeof ProblemRecordScalarFieldEnum]
+
+
+export const ProblemSourceRecordScalarFieldEnum = {
+  id: 'id',
+  problemId: 'problemId',
+  platform: 'platform',
+  author: 'author',
+  excerpt: 'excerpt',
+  url: 'url',
+  capturedAt: 'capturedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type ProblemSourceRecordScalarFieldEnum = (typeof ProblemSourceRecordScalarFieldEnum)[keyof typeof ProblemSourceRecordScalarFieldEnum]
+
+
+export const ProblemAnalysisRecordScalarFieldEnum = {
+  id: 'id',
+  problemId: 'problemId',
+  turkishSummary: 'turkishSummary',
+  painDrivers: 'painDrivers',
+  solutionIdeas: 'solutionIdeas',
+  mvpSteps: 'mvpSteps',
+  risks: 'risks',
+  model: 'model',
+  promptVersion: 'promptVersion',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProblemAnalysisRecordScalarFieldEnum = (typeof ProblemAnalysisRecordScalarFieldEnum)[keyof typeof ProblemAnalysisRecordScalarFieldEnum]
+
+
 export const ProblemValidationScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -117,6 +181,13 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -131,4 +202,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

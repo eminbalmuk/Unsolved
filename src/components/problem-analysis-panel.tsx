@@ -18,6 +18,7 @@ type AnalysisResponse = {
   analysis?: ProblemAnalysis;
   analyzedAt?: string;
   model?: string;
+  cached?: boolean;
   error?: string;
 };
 
@@ -41,10 +42,20 @@ function BulletList({ title, items }: { title: string; items: string[] }) {
   );
 }
 
-export function ProblemAnalysisPanel({ problemId }: { problemId: string }) {
-  const [analysis, setAnalysis] = useState<ProblemAnalysis | null>(null);
-  const [analyzedAt, setAnalyzedAt] = useState<string | null>(null);
-  const [model, setModel] = useState<string | null>(null);
+export function ProblemAnalysisPanel({
+  problemId,
+  initialAnalysis = null,
+  initialAnalyzedAt = null,
+  initialModel = null,
+}: {
+  problemId: string;
+  initialAnalysis?: ProblemAnalysis | null;
+  initialAnalyzedAt?: string | null;
+  initialModel?: string | null;
+}) {
+  const [analysis, setAnalysis] = useState<ProblemAnalysis | null>(initialAnalysis);
+  const [analyzedAt, setAnalyzedAt] = useState<string | null>(initialAnalyzedAt);
+  const [model, setModel] = useState<string | null>(initialModel);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -91,13 +102,21 @@ export function ProblemAnalysisPanel({ problemId }: { problemId: string }) {
               kutuda kısa Türkçe özet ve çözüm önerileri olarak görünür.
             </CardDescription>
           </div>
-          <Button onClick={handleAnalyze} disabled={isLoading} className="h-11 text-base">
+          <Button
+            onClick={handleAnalyze}
+            disabled={isLoading || Boolean(analysis)}
+            className="h-11 text-base"
+          >
             {isLoading ? (
               <Loader2 className="size-5 animate-spin" aria-hidden />
             ) : (
               <Sparkles className="size-5" aria-hidden />
             )}
-            {isLoading ? "Analiz ediliyor..." : "Analiz Et"}
+            {analysis
+              ? "Analiz kayıtlı"
+              : isLoading
+                ? "Analiz ediliyor..."
+                : "Analiz Et"}
           </Button>
         </div>
       </CardHeader>
@@ -120,6 +139,7 @@ export function ProblemAnalysisPanel({ problemId }: { problemId: string }) {
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <Badge variant="secondary">Türkçe özet</Badge>
                 {model ? <Badge variant="outline">{model}</Badge> : null}
+                <Badge variant="outline">Supabase cache</Badge>
                 {analyzedAt ? (
                   <span className="font-mono text-xs text-muted-foreground">
                     {new Intl.DateTimeFormat("tr", {

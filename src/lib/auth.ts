@@ -1,8 +1,11 @@
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
+import { getDatabaseUrl } from "@/lib/env";
 import { getPrisma } from "@/lib/prisma";
 
 export const SESSION_COOKIE = "unsolved_session";
+export const SUPABASE_ACCESS_COOKIE = "unsolved_sb_access";
+export const SUPABASE_REFRESH_COOKIE = "unsolved_sb_refresh";
 
 export type SessionUser = {
   id: string;
@@ -15,6 +18,70 @@ export type SessionUser = {
 type SessionPayload = {
   userId: string;
 };
+
+type SupabaseAuthUser = {
+  id: string;
+  email?: string;
+  user_metadata?: {
+    name?: string;
+    company?: string;
+  };
+};
+
+type SupabaseSessionResponse = {
+  access_token?: string;
+  refresh_token?: string;
+  expires_in?: number;
+  user?: SupabaseAuthUser;
+  error?: string;
+  error_description?: string;
+  msg?: string;
+};
+
+function getSupabaseAuthConfig() {
+  const url = process.env.SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+
+  if (!url || !anonKey) return null;
+
+  return {
+    url: url.replace(/\/$/, ""),
+    anonKey,
+  };
+}
+
+function getSupabaseError(data: SupabaseSessionResponse) {
+  return (
+    data.error_description ??
+    data.error ??
+    data.msg ??
+    "Supabase authentication failed."
+  );
+}
+
+async function syncSupabaseUser(user: SupabaseAuthUser) {
+  if (!isDatabaseConfigured() || !user.email) return;
+
+  try {
+    await getPrisma().user.upsert({
+      where: { id: user.id },
+      update: {
+        email: user.email,
+        name: user.user_metadata?.name ?? null,
+        company: user.user_metadata?.company ?? null,
+      },
+      create: {
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.name ?? null,
+        company: user.user_metadata?.company ?? null,
+        passwordHash: "supabase-auth",
+      },
+    });
+  } catch {
+    // Auth must keep working even if the optional Prisma mirror is unavailable.
+  }
+}
 
 function getAuthSecret() {
   const secret = process.env.AUTH_SECRET;
@@ -57,13 +124,45 @@ export async function setSessionCookie(userId: string) {
 export async function clearSessionCookie() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);
+  cookieStore.delete(SUPABASE_ACCESS_COOKIE);
+  cookieStore.delete(SUPABASE_REFRESH_COOKIE);
 }
 
 export async function getCurrentUser(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
+  const supabaseConfig = getSupabaseAuthConfig();
+  const supabaseAccessToken = cookieStore.get(SUPABASE_ACCESS_COOKIE)?.value;
+
+  if (supabaseConfig && supabaseAccessToken) {
+    try {
+      const response = await fetch(`${supabaseConfig.url}/auth/v1/user`, {
+        headers: {
+          apikey: supabaseConfig.anonKey,
+          Authorization: `Bearer ${supabaseAccessToken}`,
+        },
+        cache: "no-store",
+      });
+
+      if (!response.ok) return null;
+
+      const user = (await response.json()) as SupabaseAuthUser;
+      await syncSupabaseUser(user);
+
+      return {
+        id: user.id,
+        email: user.email ?? "",
+        name: user.user_metadata?.name ?? null,
+        role: "FOUNDER",
+        plan: "FREEMIUM",
+      };
+    } catch {
+      return null;
+    }
+  }
+
   const token = cookieStore.get(SESSION_COOKIE)?.value;
 
-  if (!token || !process.env.AUTH_SECRET || !process.env.DATABASE_URL) {
+  if (!token || !process.env.AUTH_SECRET || !getDatabaseUrl()) {
     return null;
   }
 
@@ -89,5 +188,146 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 }
 
 export function isAuthConfigured() {
-  return Boolean(process.env.DATABASE_URL && process.env.AUTH_SECRET);
+  return Boolean(getSupabaseAuthConfig() || (getDatabaseUrl() && process.env.AUTH_SECRET));
+}
+
+export function isDatabaseConfigured() {
+  return Boolean(getDatabaseUrl());
+}
+
+export function isSupabaseAuthConfigured() {
+  return Boolean(getSupabaseAuthConfig());
+}
+
+export async function ensureDatabaseUser(user: SessionUser) {
+  if (!isDatabaseConfigured()) return;
+
+  try {
+    await getPrisma().user.upsert({
+      where: { id: user.id },
+      update: {
+        email: user.email,
+        name: user.name,
+      },
+      create: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        passwordHash: "supabase-auth",
+      },
+    });
+  } catch {
+    // Persistence should not block the user-facing action.
+  }
+}
+
+export async function setSupabaseSessionCookies(session: SupabaseSessionResponse) {
+  if (!session.access_token || !session.refresh_token) return;
+
+  const cookieStore = await cookies();
+
+  cookieStore.set(SUPABASE_ACCESS_COOKIE, session.access_token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: session.expires_in ?? 60 * 60,
+  });
+
+  cookieStore.set(SUPABASE_REFRESH_COOKIE, session.refresh_token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+}
+
+export async function signUpWithSupabase({
+  name,
+  email,
+  password,
+  company,
+}: {
+  name: string;
+  email: string;
+  password: string;
+  company?: string;
+}) {
+  const config = getSupabaseAuthConfig();
+  if (!config) throw new Error("Supabase Auth is not configured.");
+
+  const response = await fetch(`${config.url}/auth/v1/signup`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: config.anonKey,
+      Authorization: `Bearer ${config.anonKey}`,
+    },
+    body: JSON.stringify({
+      email,
+      password,
+      data: { name, company: company || null },
+    }),
+    cache: "no-store",
+  });
+  const data = (await response.json()) as SupabaseSessionResponse;
+
+  if (!response.ok) {
+    throw new Error(getSupabaseError(data));
+  }
+
+  if (data.user) await syncSupabaseUser(data.user);
+  await setSupabaseSessionCookies(data);
+
+  return {
+    user: data.user
+      ? {
+          id: data.user.id,
+          email: data.user.email ?? email,
+          name: data.user.user_metadata?.name ?? name,
+          role: "FOUNDER",
+          plan: "FREEMIUM",
+        }
+      : null,
+    requiresEmailConfirmation: !data.access_token,
+  };
+}
+
+export async function signInWithSupabase({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}) {
+  const config = getSupabaseAuthConfig();
+  if (!config) throw new Error("Supabase Auth is not configured.");
+
+  const response = await fetch(`${config.url}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: config.anonKey,
+      Authorization: `Bearer ${config.anonKey}`,
+    },
+    body: JSON.stringify({ email, password }),
+    cache: "no-store",
+  });
+  const data = (await response.json()) as SupabaseSessionResponse;
+
+  if (!response.ok || !data.user) {
+    throw new Error(getSupabaseError(data));
+  }
+
+  await syncSupabaseUser(data.user);
+  await setSupabaseSessionCookies(data);
+
+  return {
+    id: data.user.id,
+    email: data.user.email ?? email,
+    name: data.user.user_metadata?.name ?? null,
+    role: "FOUNDER",
+    plan: "FREEMIUM",
+  };
 }

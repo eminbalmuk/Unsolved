@@ -25,6 +25,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { getLiveProblemBySlug } from "@/lib/ingestion";
+import { getStoredAnalysis } from "@/lib/problem-store";
 
 export default async function ProblemPage({
   params,
@@ -37,6 +38,8 @@ export default async function ProblemPage({
   if (!problem) {
     notFound();
   }
+
+  const storedAnalysis = await getStoredAnalysis(problem.id);
 
   const scoreRows = [
     ["Frequency", problem.scoreBreakdown.frequency],
@@ -85,7 +88,12 @@ export default async function ProblemPage({
           </Card>
 
           <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
-            <ProblemAnalysisPanel problemId={problem.slug} />
+            <ProblemAnalysisPanel
+              problemId={problem.slug}
+              initialAnalysis={storedAnalysis?.analysis ?? null}
+              initialAnalyzedAt={storedAnalysis?.analyzedAt ?? null}
+              initialModel={storedAnalysis?.model ?? null}
+            />
 
             <Card className="bg-card/82">
               <CardHeader>

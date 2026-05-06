@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser, isAuthConfigured } from "@/lib/auth";
+import {
+  ensureDatabaseUser,
+  getCurrentUser,
+  isAuthConfigured,
+  isDatabaseConfigured,
+} from "@/lib/auth";
 import { getLiveProblemBySlug } from "@/lib/ingestion";
 import { getPrisma } from "@/lib/prisma";
 import type { ValidationState } from "@/lib/types";
@@ -15,7 +20,7 @@ export async function POST(
     return NextResponse.json({ error: "Problem not found" }, { status: 404 });
   }
 
-  if (isAuthConfigured()) {
+  if (isAuthConfigured() && isDatabaseConfigured()) {
     const user = await getCurrentUser();
 
     if (!user) {
@@ -26,6 +31,7 @@ export async function POST(
     }
 
     const prisma = getPrisma();
+    await ensureDatabaseUser(user);
 
     await prisma.problemValidation.upsert({
       where: {

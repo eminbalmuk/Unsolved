@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getLiveProblemBySlug } from "@/lib/ingestion";
+import { getStoredAnalysis, saveStoredAnalysis } from "@/lib/problem-store";
 import type { Problem, ProblemAnalysis } from "@/lib/types";
 
 type BytePlusChatResponse = {
@@ -85,6 +86,16 @@ export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
+  const cachedAnalysis = await getStoredAnalysis(id);
+
+  if (cachedAnalysis) {
+    return NextResponse.json({
+      ...cachedAnalysis,
+      cached: true,
+    });
+  }
+
   const apiKey = process.env.BYTEPLUS_ARK_API_KEY;
 
   if (!apiKey) {
@@ -97,11 +108,18 @@ export async function POST(
     );
   }
 
-  const { id } = await params;
   const problem = await getLiveProblemBySlug(id);
 
   if (!problem) {
     return NextResponse.json({ error: "Problem not found" }, { status: 404 });
+  }
+
+  const secondCachedAnalysis = await getStoredAnalysis(problem.id);
+  if (secondCachedAnalysis) {
+    return NextResponse.json({
+      ...secondCachedAnalysis,
+      cached: true,
+    });
   }
 
   const endpoint = process.env.BYTEPLUS_ARK_API_URL ?? DEFAULT_ENDPOINT;
@@ -164,10 +182,14 @@ export async function POST(
       );
     }
 
+    const analysis = extractJson(content);
+    const savedAnalysis = await saveStoredAnalysis(problem, analysis, model);
+
     return NextResponse.json({
-      analysis: extractJson(content),
-      analyzedAt: new Date().toISOString(),
+      analysis: savedAnalysis?.analysis ?? analysis,
+      analyzedAt: savedAnalysis?.analyzedAt ?? new Date().toISOString(),
       model,
+      cached: false,
     });
   } catch (error) {
     return NextResponse.json(
@@ -180,4 +202,21 @@ export async function POST(
       { status: 500 },
     );
   }
+}
+
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  const cachedAnalysis = await getStoredAnalysis(id);
+
+  if (!cachedAnalysis) {
+    return NextResponse.json({ analysis: null }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    ...cachedAnalysis,
+    cached: true,
+  });
 }

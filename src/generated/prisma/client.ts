@@ -47,6 +47,21 @@ export { Prisma }
  */
 export type User = Prisma.UserModel
 /**
+ * Model ProblemRecord
+ * 
+ */
+export type ProblemRecord = Prisma.ProblemRecordModel
+/**
+ * Model ProblemSourceRecord
+ * 
+ */
+export type ProblemSourceRecord = Prisma.ProblemSourceRecordModel
+/**
+ * Model ProblemAnalysisRecord
+ * 
+ */
+export type ProblemAnalysisRecord = Prisma.ProblemAnalysisRecordModel
+/**
  * Model ProblemValidation
  * 
  */

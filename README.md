@@ -49,7 +49,7 @@ The Explore feed now pulls real public data server-side from:
 - Reddit public listing/search JSON for `r/SaaS`, `r/startups`, and `r/ProductManagement`
 - Apple iTunes/App Store customer review RSS JSON for configured app IDs
 
-Live source fetches are cached for 15 minutes and fall back to the seed dataset if every provider fails. Optional environment variables:
+Live source fetches are cached for 15 minutes and fall back to Supabase-stored problems, then the seed dataset, if every provider fails. When `DATABASE_URL` is configured, normalized problems and source snippets are persisted in Supabase so the app does not repeatedly fetch already-known forum problems. Optional environment variables:
 
 - `REDDIT_USER_AGENT`
 - `APPLE_RSS_COUNTRY`
@@ -62,6 +62,8 @@ Problem detail pages include an on-demand `Analiz Et` button. It calls BytePlus 
 - `BYTEPLUS_ARK_API_URL` (defaults to the BytePlus Ark chat completions endpoint)
 - `BYTEPLUS_ARK_MODEL` (defaults to `deepseek-v3-2-251201`)
 
+When `DATABASE_URL` is configured, Turkish analysis results are stored in Supabase. Previously analyzed problems render from the database and the `Analiz Et` button is disabled, preventing duplicate model calls and reducing token cost.
+
 Live auth, payment, Supabase, Pinecone, OAuth-based Reddit API access, and FastAPI LLM pipeline are intentionally left as integration boundaries for the next phase.
 
 ## Supabase + Prisma auth
@@ -70,7 +72,10 @@ Fill `.env` with the required Supabase and auth values, then run:
 
 ```bash
 npm run db:generate
-npm run db:push
+npm run db:setup:supabase
+npm run db:seed:problems
 ```
 
-Use the Supabase transaction pooler URL for `DATABASE_URL` on Vercel and the direct Supabase URL for `DIRECT_URL` when running migrations locally.
+Use the Supabase transaction pooler URL for `DATABASE_URL` on Vercel and local development. `db:setup:supabase` creates the required Supabase tables through a guarded SQL setup script, which avoids local IPv6/direct-connection issues.
+
+Supabase Auth can run with `SUPABASE_URL` and `SUPABASE_ANON_KEY`. Persistent problem storage, validation storage, and AI-analysis caching require `DATABASE_URL` / `DIRECT_URL` as well.
